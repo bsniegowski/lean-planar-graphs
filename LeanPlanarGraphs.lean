@@ -1,1 +1,2 @@
-import LeanPlanarGraphs.Basic
+import LeanPlanarGraphs.CombinatorialMap
+import LeanPlanarGraphs.ListColoring
