@@ -1,2 +1,3 @@
 import LeanPlanarGraphs.CombinatorialMap
 import LeanPlanarGraphs.ListColoring
+import LeanPlanarGraphs.PlanarGraph
