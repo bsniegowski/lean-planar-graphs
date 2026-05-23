@@ -36,6 +36,3 @@ def CombinatorialMap.genus {D : Type} [Fintype D] [DecidableEq D] (cm : Combinat
 
 def CombinatorialMap.IsPlanar {D} [Fintype D] [DecidableEq D] (cm : CombinatorialMap D) : Prop
   := cm.genus = 0
-
-def IsPlanar [Fintype V] [DecidableEq V] (G : SimpleGraph V) [DecidableRel G.Adj] : Prop :=
-  ∃ cm : CombinatorialMap G.Dart, CombinatorialMapRepresentsGraph G cm ∧ cm.IsPlanar
