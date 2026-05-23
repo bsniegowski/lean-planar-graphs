@@ -10,6 +10,8 @@ structure PlanarGraph (V : Type) [Fintype V] [DecidableEq V] extends og : Simple
   repG : CombinatorialMapRepresentsGraph og cm
   isPlanar : cm.IsPlanar
 
+instance (G : PlanarGraph V) : DecidableRel G.og.Adj := G.decRel
+
 def IsPlanar [Fintype V] [DecidableEq V] (G : SimpleGraph V) [DecidableRel G.Adj] : Prop :=
   ∃ cm : CombinatorialMap G.Dart, CombinatorialMapRepresentsGraph G cm ∧ cm.IsPlanar
 
