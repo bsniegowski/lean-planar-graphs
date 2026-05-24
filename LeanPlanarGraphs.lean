@@ -1,3 +1,5 @@
 import LeanPlanarGraphs.CombinatorialMap
 import LeanPlanarGraphs.ListColoring
 import LeanPlanarGraphs.PlanarGraph
+import LeanPlanarGraphs.MaxPlaneIffTriang
+import LeanPlanarGraphs.Thomassen_1994
