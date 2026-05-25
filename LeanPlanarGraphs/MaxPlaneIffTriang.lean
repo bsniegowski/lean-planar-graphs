@@ -60,3 +60,7 @@ CombinatorialMapRepresentsMaximallyPlanar G cm ↔
 CombinatorialMapRepresentsGraph G cm ∧ IsPlaneTriangulationMap cm := by
   sorry
  -/
+
+theorem triangulationExists (G : PlanarGraph V)
+: ∃ G' : PlanarGraph V, G.og ≤ G'.og ∧ G'.IsPlaneTriangulation := by
+  sorry
