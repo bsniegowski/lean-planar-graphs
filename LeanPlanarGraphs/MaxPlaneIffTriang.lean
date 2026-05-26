@@ -53,6 +53,35 @@ G.IsMaximal ↔ G.IsPlaneTriangulation := by
   · intro h
     sorry
 
+/- a proof that any planeTriangulation has darts, used in PickOuterFace
+in Thomassen_1994 -/
+theorem PlanarGraph.TriangleHasDarts (G : PlanarGraph V) (triang : G.IsPlaneTriangulation)
+ : Nonempty G.og.Dart := by
+  rcases triang with ⟨order3, _⟩
+  apply Fintype.card_pos_iff.mp
+  apply Nat.pos_of_ne_zero
+  contrapose order3
+  have: @Finset.univ G.Dart _ = ∅ := by
+    contrapose order3
+    push Not at *
+    apply Nat.ne_zero_iff_zero_lt.mpr
+    apply Fintype.card_pos_iff.mpr
+    exact Exists.nonempty order3
+  simp
+  have σ_support_zero : G.cm.σ.support.card = 0 := by
+    simp
+    apply Equiv.Perm.support_eq_empty_iff.mp
+    apply Finset.subset_empty.mp
+    rw[← this]
+    apply Finset.subset_univ
+  have σ_cycle_zero : G.cm.σ.cycleType.card = 0 := by
+    apply Equiv.Perm.card_cycleType_eq_zero.mpr
+    apply Equiv.Perm.support_eq_empty_iff.mp
+    apply Finset.subset_empty.mp
+    rw[← this]
+    apply Finset.subset_univ
+  omega
+
 /- theorem CombinatorialMap.IsMaximallyPlanar_iff_IsPlaneTriangulationMap {V : Type}
 [Fintype V] [DecidableEq V] (G : SimpleGraph V) [DecidableRel G.Adj] [Fintype G.Dart]
 [DecidableEq G.Dart] (cm : CombinatorialMap G.Dart) :
