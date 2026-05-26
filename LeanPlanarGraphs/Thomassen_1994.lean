@@ -63,16 +63,87 @@ lemma pickOuterFace (G : PlanarGraph V) (isTr : G.IsPlaneTriangulation) :
   -- isCycleAndTriangles C:
   · refine ⟨?_, ?_, ⟨d₀, ?_, ?_⟩⟩
     · -- C.Nodup, i.e. v₀, v₁, v₂ pairwise distinct
-      sorry
+      apply List.Nodup.cons
+      · apply List.not_mem_cons_of_ne_of_not_mem
+        · simp [v₀, v₁, d₁]
+          rw[cm_Φ_fst_eq_snd G.repG d₀] 
+          simp
+        · simp [v₀, v₂]
+          have : G.cm.Φ d₂ = d₀ := by
+            simp [d₂, d₁]
+            sorry -- prove that φ φ φ d₀ = d₀, which follows
+                  -- from the cycle of d₀ under φ having support 3
+          rw[←this]
+          rw[cm_Φ_fst_eq_snd G.repG d₂] 
+          simp
+        
+      · apply List.Nodup.cons
+        · apply List.not_mem_cons_of_ne_of_not_mem
+          · simp [v₁, v₂]
+            rw[cm_Φ_fst_eq_snd G.repG d₁] 
+            simp
+          · simp
+        simp
     · simp [C]   -- length is 3
     · -- (cycleOf d₀).support.image (·.fst) = C.toFinset
       -- support = {d₀, d₁, d₂} (since cycle of length 3 starting at d₀)
-      sorry
+      ext x
+      simp
+      constructor
+      · rintro ⟨a, aoncycle, a_fst_x⟩
+        obtain aoncycle : a ∈ (G.cm.Φ.cycleOf d₀).support := by simp; assumption
+        rw[←a_fst_x]
+        sorry -- consider cases that a is d₀ d₁ or d₂ 
+              -- then obvious in each case
+      · intro xinc
+        by_cases eqv₀ : x = v₀ 
+        use d₀
+        constructor
+        · simp
+          apply Equiv.Perm.support_cycleOf_nonempty.mp
+          apply Finset.card_pos.mp 
+          exact Nat.lt_of_sub_eq_succ hFace
+        rw[eqv₀]
+        by_cases eqv₁ : x = v₁
+        use d₁
+        constructor
+        · have :  G.cm.Φ.cycleOf d₁ = G.cm.Φ.cycleOf d₀ := by
+            exact Equiv.Perm.cycleOf_self_apply G.cm.Φ d₀
+          rw[←this]
+          simp
+          apply Equiv.Perm.support_cycleOf_nonempty.mp
+          apply Finset.card_pos.mp 
+          rw[this]
+          exact Nat.lt_of_sub_eq_succ hFace
+        rw[eqv₁]
+        by_cases eqv₂ : x = v₂
+        use d₂
+        constructor
+        · have :  G.cm.Φ.cycleOf d₂ = G.cm.Φ.cycleOf d₀ := by
+            refine Equiv.Perm.SameCycle.cycleOf_eq ?_
+            repeat
+              apply Equiv.Perm.SameCycle.apply_left
+            exact Equiv.Perm.SameCycle.refl G.cm.Φ d₀
+          rw[←this]
+          simp
+          apply Equiv.Perm.support_cycleOf_nonempty.mp
+          apply Finset.card_pos.mp 
+          rw[this]
+          exact Nat.lt_of_sub_eq_succ hFace
+        rw[eqv₂]
+        have : x ∉ C := by
+          apply List.not_mem_cons_of_ne_of_not_mem eqv₀
+          apply List.not_mem_cons_of_ne_of_not_mem eqv₁
+          simp
+          assumption
+        contradiction
     · -- every other face is a triangle
       intro d hd
       exact isTr.2 d
   -- v₀ ≠ v₁
-  · sorry
+  · simp [v₀, v₁, d₁]
+    rw[cm_Φ_fst_eq_snd G.repG d₀] 
+    simp
   -- adjacency of v₀ and v₁
   · have h : v₁ = d₀.snd := cm_Φ_fst_eq_snd G.repG d₀
     rw [h]
