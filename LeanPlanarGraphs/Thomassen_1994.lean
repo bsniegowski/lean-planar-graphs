@@ -85,7 +85,43 @@ lemma pickOuterFace (G : PlanarGraph V) (isTr : G.IsPlaneTriangulation) :
 /-- pick two distinct colors from two 5-color lists -/
 lemma pickTwoColors (list : SimpleGraph.KList ℕ 5) (v₁ v₂ : V) :
     ∃ c₁ c₂ : ℕ, c₁ ≠ c₂ ∧ c₁ ∈ list.f v₁ ∧ c₂ ∈ list.f v₂ := by
-  sorry
+  --choose an element in list.f v₁
+  have : (list.f v₁).Nonempty := by
+    apply Finset.card_ne_zero.mp 
+    have : (list.f v₁).card = 5 := by
+      exact list.cardinality_K v₁
+    linarith
+  let a₁ : ℕ := this.choose
+
+  --choose an element in list.f v₂ \ {a₁}
+  have : (list.f v₂ \ {a₁}).Nonempty := by
+    apply Finset.sdiff_nonempty_of_card_lt_card 
+    have : (list.f v₂).card = 5 := by
+      exact list.cardinality_K v₂
+    rw[this]
+    have : ({a₁} : Finset ℕ).card = 1 := by
+      exact Finset.card_singleton a₁
+    linarith
+  let a₂ : ℕ := this.choose
+  have : a₂ ∈ list.f v₂ \ {a₁} := by
+      apply Classical.choose_spec _
+  
+  use a₁
+  use a₂
+
+  refine ⟨?_,?_,?_⟩ 
+  · have : a₁ ∉ list.f v₂ \ {a₁} := by
+      apply Finset.notMem_sdiff_of_mem_right
+      exact Finset.mem_singleton.mpr rfl
+    contrapose this
+    nth_rw 2[this]
+    assumption
+
+  · simp only [a₁]
+    exact Classical.choose_spec _
+
+  · simp at this
+    exact this.1
 
 /-- Thomassen 1994 as given in Diestel: every planar graph is five list-colorable -/
 theorem PlanarGraph.fiveListColorable (G : PlanarGraph V) : G.ListColorable 5 := by
