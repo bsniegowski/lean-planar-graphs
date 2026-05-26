@@ -45,8 +45,7 @@ def CombinatorialMapRepresentsMaximallyPlanar {V : Type} [Fintype V] [DecidableE
  -/
 
 -- state Proposition 4.2.8
-theorem PlanarGraph.IsMaximal_iff_IsPlaneTriangulation (G : PlanarGraph V)
-(h : G.cm.σ.cycleType.card + (Fintype.card G.og.Dart - G.cm.σ.support.card) ≥ 3) :
+theorem PlanarGraph.IsMaximal_iff_IsPlaneTriangulation (G : PlanarGraph V) :
 G.IsMaximal ↔ G.IsPlaneTriangulation := by
   constructor
   · intro h
@@ -92,14 +91,11 @@ lemma PlanarGraph.existsMaximalPlanarSupergraph (G : PlanarGraph V) :
   exact ⟨G', hsubG, hmax'⟩
 
 -- assuming maximal planar supergraph exists, triangulation exists
-theorem PlanarGraph.triangulationExists (G : PlanarGraph V)
-(h : G.cm.σ.cycleType.card + (Fintype.card G.og.Dart - G.cm.σ.support.card) ≥ 3) :
+theorem PlanarGraph.triangulationExists (G : PlanarGraph V) :
 ∃ G' : PlanarGraph V, G.og ≤ G'.og ∧ G'.IsPlaneTriangulation := by
   obtain ⟨G', hsub, hmax⟩ := PlanarGraph.existsMaximalPlanarSupergraph G
-  have h' : G'.cm.σ.cycleType.card + (Fintype.card G'.Dart - G'.cm.σ.support.card) ≥ 3 := by
-    sorry
   have htriang : G'.IsPlaneTriangulation :=
-  (PlanarGraph.IsMaximal_iff_IsPlaneTriangulation G' h').mp hmax
+  (PlanarGraph.IsMaximal_iff_IsPlaneTriangulation G').mp hmax
   exact ⟨G', hsub, htriang⟩
 
 /- to prove h', need consider changing way this line used to calculate cardinality
