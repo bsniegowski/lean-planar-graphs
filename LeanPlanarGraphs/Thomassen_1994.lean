@@ -15,10 +15,13 @@ theorem IsPlanar_imp_fiveListColorable (G : SimpleGraph V) [DecidableRel G.Adj]
 
 
 /-- G has at least three vertices/C contains at least three vertices, G has one face bounded by
-vertices in C, and all other faces are triangles -/
+vertices in C, and all other faces are triangles
+Note: `(G.cm.Φ.cycleOf d₀).support.image (fun d => d.fst) = C.toFinset` is a set equality so we lose
+the cyclic ordering, this might need fixing -/
 def PlanarGraph.isCycleAndTriangles (G : PlanarGraph V) (C : List V) : Prop :=
-  G.cm.σ.cycleType.card + (Fintype.card G.og.Dart - G.cm.σ.support.card) ≥ 3 -- safety first
-  ∧ C.Nodup
+  -- Below could propably be derived from `C.Nodup ∧ C.length ≥ 3`
+  -- G.cm.σ.cycleType.card + (Fintype.card G.og.Dart - G.cm.σ.support.card) ≥ 3 -- safety first
+  C.Nodup
   ∧ C.length ≥ 3
   ∧ ∃ d₀ : G.og.Dart, (G.cm.Φ.cycleOf d₀).support.image (fun d => d.fst) = C.toFinset
           ∧ ∀ d : G.og.Dart, d ∉ (G.cm.Φ.cycleOf d₀).support →
@@ -40,10 +43,44 @@ theorem PlanarGraph.listColor_isCycleAndTriangles (G : PlanarGraph V) (C : List 
     sorry
 
 /-- Pick any face to be outer and two adjacent vertices on it -/
-lemma pickOuterFace (G : PlanarGraph V) (hTri : G.IsPlaneTriangulation) :
+lemma pickOuterFace (G : PlanarGraph V) (isTr : G.IsPlaneTriangulation) :
     ∃ C : List V, G.isCycleAndTriangles C ∧
       ∃ v₁ v₂ : V, v₁ ≠ v₂ ∧ G.og.Adj v₁ v₂ ∧ v₁ ∈ C ∧ v₂ ∈ C := by
-  sorry
+  -- Darts are non-empty from isTr.1
+  have hNE : Nonempty G.og.Dart := by
+    sorry
+  obtain ⟨d₀⟩ := hNE
+  -- The face through d₀ has 3 darts
+  have hFace : (G.cm.Φ.cycleOf d₀).support.card = 3 := isTr.2 d₀
+  let d₁ := G.cm.Φ d₀
+  let d₂ := G.cm.Φ d₁
+  -- Build C from their .fst
+  let v₀ := d₀.fst
+  let v₁ := d₁.fst
+  let v₂ := d₂.fst
+  let C : List V := [v₀, v₁, v₂]
+  refine ⟨C, ?_, v₀, v₁, ?_, ?_, ?_, ?_⟩
+  -- isCycleAndTriangles C:
+  · refine ⟨?_, ?_, ⟨d₀, ?_, ?_⟩⟩
+    · -- C.Nodup, i.e. v₀, v₁, v₂ pairwise distinct
+      sorry
+    · simp [C]   -- length is 3
+    · -- (cycleOf d₀).support.image (·.fst) = C.toFinset
+      -- support = {d₀, d₁, d₂} (since cycle of length 3 starting at d₀)
+      sorry
+    · -- every other face is a triangle
+      intro d hd
+      exact isTr.2 d
+  -- v₀ ≠ v₁
+  · sorry
+  -- adjacency of v₀ and v₁
+  · have h : v₁ = d₀.snd := cm_Φ_fst_eq_snd G.repG d₀
+    rw [h]
+    exact d₀.adj
+  -- v₀ ∈ C
+  · simp [C]
+  -- v₁ ∈ C
+  · simp [C]
 
 /-- pick two distinct colors from two 5-color lists -/
 lemma pickTwoColors (list : SimpleGraph.KList ℕ 5) (v₁ v₂ : V) :
@@ -54,7 +91,6 @@ lemma pickTwoColors (list : SimpleGraph.KList ℕ 5) (v₁ v₂ : V) :
 theorem PlanarGraph.fiveListColorable (G : PlanarGraph V) : G.ListColorable 5 := by
   intro list_c
   obtain ⟨Gtr, isSubg, isTr⟩ := triangulationExists G
-  -- Picking any face to be the outer face
   obtain ⟨C, hCT, v₁, v₂, hv₁v₂, hAdj, hv₁C, hv₂C⟩ := pickOuterFace Gtr isTr
   obtain ⟨c₁, c₂, hcc_neq, hc₁, hc₂⟩ := pickTwoColors list_c v₁ v₂
   -- apply (*)

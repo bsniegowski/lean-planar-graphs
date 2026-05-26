@@ -18,8 +18,8 @@ def CombinatorialMap.Φ {D : Type} (cm : CombinatorialMap D) := cm.σ * cm.α
 /-- Combinatorial map represents a connected graph G if α is an involution on its darts and two
 darts are on the same orbit of σ iff they have the same origin vertex -/
 def CombinatorialMapRepresentsGraph (G : SimpleGraph V) (cm : CombinatorialMap G.Dart) : Prop :=
-  ∀ d : G.Dart, cm.α d = d.symm ∧
-  ∀ d1 d2 : G.Dart, Equiv.Perm.SameCycle cm.σ d1 d2 ↔ d1.fst = d2.fst
+  (∀ d : G.Dart, cm.α d = d.symm) ∧
+  (∀ d1 d2 : G.Dart, Equiv.Perm.SameCycle cm.σ d1 d2 ↔ d1.fst = d2.fst)
 
 
 -- Limiting planarity considerations only to finite, connected graphs
@@ -80,3 +80,16 @@ noncomputable def CombinatorialMapOfSubgraph (G H : SimpleGraph V) [DecidableRel
   have genus_unchanged : cm.genus = cm_subG.genus := by
     sorry
   ⟨cm_subG, And.intro cm_subG_rep_subG genus_unchanged⟩
+
+lemma cm_σ_fst_preserve {V} [DecidableEq V] {G : SimpleGraph V}
+    {cm : CombinatorialMap G.Dart} (repG : CombinatorialMapRepresentsGraph G cm)
+    (d : G.Dart) : (cm.σ d).fst = d.fst := by
+  apply (repG.2 (cm.σ d) d).mp
+  simp; rfl
+
+lemma cm_Φ_fst_eq_snd {V} [DecidableEq V] {G : SimpleGraph V}
+    {cm : CombinatorialMap G.Dart} (repG : CombinatorialMapRepresentsGraph G cm)
+    (d : G.Dart) : (cm.Φ d).fst = d.snd := by
+  unfold CombinatorialMap.Φ
+  rw [Equiv.Perm.mul_apply, cm_σ_fst_preserve repG, repG.1 d]
+  rfl
