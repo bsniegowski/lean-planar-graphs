@@ -48,7 +48,7 @@ lemma pickOuterFace (G : PlanarGraph V) (isTr : G.IsPlaneTriangulation) :
       ∃ v₁ v₂ : V, v₁ ≠ v₂ ∧ G.og.Adj v₁ v₂ ∧ v₁ ∈ C ∧ v₂ ∈ C := by
   -- Darts are non-empty from isTr.1
   have hNE : Nonempty G.og.Dart := by
-    sorry
+    exact G.TriangleHasDarts isTr
   obtain ⟨d₀⟩ := hNE
   -- The face through d₀ has 3 darts
   have hFace : (G.cm.Φ.cycleOf d₀).support.card = 3 := isTr.2 d₀
@@ -85,7 +85,43 @@ lemma pickOuterFace (G : PlanarGraph V) (isTr : G.IsPlaneTriangulation) :
 /-- pick two distinct colors from two 5-color lists -/
 lemma pickTwoColors (list : SimpleGraph.KList ℕ 5) (v₁ v₂ : V) :
     ∃ c₁ c₂ : ℕ, c₁ ≠ c₂ ∧ c₁ ∈ list.f v₁ ∧ c₂ ∈ list.f v₂ := by
-  sorry
+  --choose an element in list.f v₁
+  have : (list.f v₁).Nonempty := by
+    apply Finset.card_ne_zero.mp 
+    have : (list.f v₁).card = 5 := by
+      exact list.cardinality_K v₁
+    linarith
+  let a₁ : ℕ := this.choose
+
+  --choose an element in list.f v₂ \ {a₁}
+  have : (list.f v₂ \ {a₁}).Nonempty := by
+    apply Finset.sdiff_nonempty_of_card_lt_card 
+    have : (list.f v₂).card = 5 := by
+      exact list.cardinality_K v₂
+    rw[this]
+    have : ({a₁} : Finset ℕ).card = 1 := by
+      exact Finset.card_singleton a₁
+    linarith
+  let a₂ : ℕ := this.choose
+  have : a₂ ∈ list.f v₂ \ {a₁} := by
+      apply Classical.choose_spec _
+  
+  use a₁
+  use a₂
+
+  refine ⟨?_,?_,?_⟩ 
+  · have : a₁ ∉ list.f v₂ \ {a₁} := by
+      apply Finset.notMem_sdiff_of_mem_right
+      exact Finset.mem_singleton.mpr rfl
+    contrapose this
+    nth_rw 2[this]
+    assumption
+
+  · simp only [a₁]
+    exact Classical.choose_spec _
+
+  · simp at this
+    exact this.1
 
 /-- Thomassen 1994 as given in Diestel: every planar graph is five list-colorable -/
 theorem PlanarGraph.fiveListColorable (G : PlanarGraph V) : G.ListColorable 5 := by
@@ -105,3 +141,9 @@ theorem PlanarGraph.fiveListColorable (G : PlanarGraph V) : G.ListColorable 5 :=
     intro v
     exact LC.color_mem_f v
   exact ⟨{ coloring := c, color_mem_f := h_mem }⟩
+
+/-- simple collorary that planar graphs are 5-colorable
+-/
+theorem PlanarGraph.fiveColorable (G : PlanarGraph V) : G.Colorable 5 := by
+  obtain Glistcolorable := G.fiveListColorable
+  exact SimpleGraph.ListColoring.ListColorable_imp_colorable G.og 5 Glistcolorable
