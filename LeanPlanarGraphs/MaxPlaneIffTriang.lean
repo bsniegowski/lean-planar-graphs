@@ -45,7 +45,8 @@ def CombinatorialMapRepresentsMaximallyPlanar {V : Type} [Fintype V] [DecidableE
  -/
 
 -- state Proposition 4.2.8
-theorem PlanarGraph.IsMaximal_iff_IsPlaneTriangulation (G : PlanarGraph V) :
+theorem PlanarGraph.IsMaximal_iff_IsPlaneTriangulation (G : PlanarGraph V)
+(h : G.cm.σ.cycleType.card + (Fintype.card G.og.Dart - G.cm.σ.support.card) ≥ 3) :
 G.IsMaximal ↔ G.IsPlaneTriangulation := by
   constructor
   · intro h
@@ -93,7 +94,7 @@ CombinatorialMapRepresentsGraph G cm ∧ IsPlaneTriangulationMap cm := by
 -- construct maximal planar supergraph of type PlanarGraph V
 lemma PlanarGraph.existsMaximalPlanarSupergraph (G : PlanarGraph V) :
 ∃ G' : PlanarGraph V, G.og ≤ G'.og ∧ G'.IsMaximal := by
-  classical -- makes IsPlanar H work
+  classical -- for IsPlanar H
   let S : Set (SimpleGraph V) := { H | G.og ≤ H ∧ IsPlanar H }
 
   have hSnonempty : ∃ H, H ∈ S := by
@@ -101,7 +102,9 @@ lemma PlanarGraph.existsMaximalPlanarSupergraph (G : PlanarGraph V) :
     constructor
     · exact le_rfl
     · refine ⟨G.cm, G.repG, ?_⟩
-      -- exact G.isPlanar; issue with agreement of decidability of relations?
+      -- exact G.isPlanar
+      -- issue with agreement of decidability of relations becasue one
+      -- comes via classical choice; we choose prop to be decidable
       sorry
 
   have hSfinite : S.Finite := by
@@ -119,6 +122,8 @@ lemma PlanarGraph.existsMaximalPlanarSupergraph (G : PlanarGraph V) :
     hSnonempty
 
   obtain ⟨cm, hrepG, hplanar⟩ := hHinS.2 -- hHinS : G.og ≤ H ∧ IsPlanar H
+
+  -- define maximal PlanarGraph term
   let G' : PlanarGraph V :=
   { og := H,
     cm := cm,
@@ -129,32 +134,59 @@ lemma PlanarGraph.existsMaximalPlanarSupergraph (G : PlanarGraph V) :
 
   have hsubG : G.og ≤ G'.og := hHinS.1
 
+  -- prove G' is maximal
   have hmax' : G'.IsMaximal := by
     intro K decrelK hG'leqK hKplanar
 
-    have hKinS : K ∈ S := by
+    /- have hKinS : K ∈ S := by
       have hSdef : G.og ≤ K ∧ IsPlanar K := by
         constructor
         · exact le_trans hHinS.1 hG'leqK
         · exact hKplanar
-      sorry -- again, issue with agreement of decidability of relations?
+      sorry -- again, issue with agreement of decidability of relations? -/
 
     have hcardHK : H.edgeFinset.card ≤ K.edgeFinset.card := by
-      have hedgesub : H.edgeFinset ⊆ K.edgeFinset := by
+      have hHedgesubK : H.edgeFinset ⊆ K.edgeFinset := by
         exact SimpleGraph.edgeFinset_mono hG'leqK
       apply Finset.card_mono
-      exact hedgesub
+      exact hHedgesubK
 
-    have heqKH : K = H := by
+    /- have hcardHK' : (fun j : SimpleGraph V => j.edgeFinset.card) H ≤
+    (fun j : SimpleGraph V => j.edgeFinset.card) K := by
+      change H.edgeFinset.card ≤ K.edgeFinset.card -/
+
+    have hcardKH : K.edgeFinset.card ≤ H.edgeFinset.card :=
       sorry
-      
+
+    have hHsubK : H.edgeFinset ⊆ K.edgeFinset :=
+      SimpleGraph.edgeFinset_subset_edgeFinset.mpr hG'leqK
+
+    have hHedgeeqK : H.edgeFinset = K.edgeFinset :=
+      Finset.eq_of_subset_of_card_le hHsubK hcardKH
+
+    have heqKH : H = K := by
+      ext v w
+      constructor
+      · intro hvw
+        exact hG'leqK hvw
+      · intro hvw
+        have : s(v, w) ∈ H.edgeFinset := by
+          rw [hHedgeeqK]
+          exact SimpleGraph.mem_edgeFinset.mpr hvw
+        exact SimpleGraph.mem_edgeFinset.mp this
+
     simp [G', heqKH]
   exact ⟨G', hsubG, hmax'⟩
 
 -- assuming maximal planar supergraph exists, triangulation exists
-theorem PlanarGraph.triangulationExists (G : PlanarGraph V) :
+theorem PlanarGraph.triangulationExists (G : PlanarGraph V) (h : G.cm.σ.cycleType.card + (Fintype.card G.og.Dart - G.cm.σ.support.card) ≥ 3) :
 ∃ G' : PlanarGraph V, G.og ≤ G'.og ∧ G'.IsPlaneTriangulation := by
   obtain ⟨G', hsub, hmax⟩ := PlanarGraph.existsMaximalPlanarSupergraph G
+  have h' : G'.cm.σ.cycleType.card + (Fintype.card G'.og.Dart - G'.cm.σ.support.card) ≥ 3 := by
+    sorry
+    -- need to construct CombinatorialMap that represents G'; difficult to do explicilty
+    -- without preexisting orientation; consider using choice?
+    -- alternatively use SimpleGraph structure of G.og and G'.og
   have htriang : G'.IsPlaneTriangulation :=
-  (PlanarGraph.IsMaximal_iff_IsPlaneTriangulation G').mp hmax
+  (PlanarGraph.IsMaximal_iff_IsPlaneTriangulation G' h').mp hmax
   exact ⟨G', hsub, htriang⟩
