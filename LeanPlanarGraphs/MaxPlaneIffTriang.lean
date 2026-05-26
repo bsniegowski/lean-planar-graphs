@@ -63,20 +63,32 @@ CombinatorialMapRepresentsGraph G cm ∧ IsPlaneTriangulationMap cm := by
 
 -- construct maximal planar supergraph of type PlanarGraph V
 lemma PlanarGraph.existsMaximalPlanarSupergraph (G : PlanarGraph V) :
-  ∃ G' : PlanarGraph V, G.og ≤ G'.og ∧ G'.IsMaximal := by
+∃ G' : PlanarGraph V, G.og ≤ G'.og ∧ G'.IsMaximal := by
   classical -- makes IsPlanar H work
   let S : Set (SimpleGraph V) := { H | G.og ≤ H ∧ IsPlanar H }
-  have hS_nonempty : ∃ H, H ∈ S := by
-    sorry
-  have hS_finite : S.Finite := by
-    sorry
+
+  have hSnonempty : ∃ H, H ∈ S := by
+    use G.og
+    constructor
+    · exact le_rfl
+    · refine ⟨G.cm, G.repG, ?_⟩
+      -- exact G.isPlanar; issue with agreement of decidability of relations?
+      sorry
+
+  have hSfinite : S.Finite := by
+    have huniv : (Set.univ : Set (SimpleGraph V)).Finite := Set.finite_univ
+    have hSsub : S ⊆ Set.univ := by
+      simp
+    exact huniv.subset hSsub
+
   -- Set.Finite.exists_maximalFor gives maximum of
   -- finite set of SimpleGraphs S w.r.t. cardinality of edge set
   obtain ⟨H, hHinS, hmax⟩ := Set.Finite.exists_maximalFor
     (fun H : SimpleGraph V => H.edgeFinset.card)
     S
-    hS_finite
-    hS_nonempty
+    hSfinite
+    hSnonempty
+
   obtain ⟨cm, hrepG, hplanar⟩ := hHinS.2 -- hHinS : G.og ≤ H ∧ IsPlanar H
   let G' : PlanarGraph V :=
   { og := H,
@@ -85,9 +97,29 @@ lemma PlanarGraph.existsMaximalPlanarSupergraph (G : PlanarGraph V) :
     isConnected := sorry,
     repG := hrepG,
     isPlanar := hplanar }
+
   have hsubG : G.og ≤ G'.og := hHinS.1
+
   have hmax' : G'.IsMaximal := by
-    sorry
+    intro K decrelK hG'leqK hKplanar
+
+    have hKinS : K ∈ S := by
+      have hSdef : G.og ≤ K ∧ IsPlanar K := by
+        constructor
+        · exact le_trans hHinS.1 hG'leqK
+        · exact hKplanar
+      sorry -- again, issue with agreement of decidability of relations?
+
+    have hcardHK : H.edgeFinset.card ≤ K.edgeFinset.card := by
+      have hedgesub : H.edgeFinset ⊆ K.edgeFinset := by
+        exact SimpleGraph.edgeFinset_mono hG'leqK
+      apply Finset.card_mono
+      exact hedgesub
+
+    have heqKH : K = H := by
+      sorry
+      
+    simp [G', heqKH]
   exact ⟨G', hsubG, hmax'⟩
 
 -- assuming maximal planar supergraph exists, triangulation exists
@@ -97,7 +129,3 @@ theorem PlanarGraph.triangulationExists (G : PlanarGraph V) :
   have htriang : G'.IsPlaneTriangulation :=
   (PlanarGraph.IsMaximal_iff_IsPlaneTriangulation G').mp hmax
   exact ⟨G', hsub, htriang⟩
-
-/- to prove h', need consider changing way this line used to calculate cardinality
-of vertex set works; might be better to work directly with Finset of vertices from G'.og
--/
