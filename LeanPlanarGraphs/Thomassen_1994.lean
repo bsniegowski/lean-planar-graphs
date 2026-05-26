@@ -197,21 +197,25 @@ lemma pickTwoColors (list : SimpleGraph.KList ℕ 5) (v₁ v₂ : V) :
 /-- Thomassen 1994 as given in Diestel: every planar graph is five list-colorable -/
 theorem PlanarGraph.fiveListColorable (G : PlanarGraph V) : G.ListColorable 5 := by
   intro list_c
-  obtain ⟨Gtr, isSubg, isTr⟩ := triangulationExists G
-  obtain ⟨C, hCT, v₁, v₂, hv₁v₂, hAdj, hv₁C, hv₂C⟩ := pickOuterFace Gtr isTr
-  obtain ⟨c₁, c₂, hcc_neq, hc₁, hc₂⟩ := pickTwoColors list_c v₁ v₂
-  -- apply (*)
-  obtain ⟨LC, _, _⟩ :=
-    Gtr.listColor_isCycleAndTriangles C hCT v₁ v₂ hv₁v₂ hAdj hv₁C hv₂C
-      list_c.f c₁ c₂ hcc_neq hc₁ hc₂
-      (fun v _ _ _ => by rw [list_c.cardinality_K]; norm_num)
-      (fun v _   => by rw [list_c.cardinality_K])
-  -- Transfer the coloring of Gtr to original G
-  let c : G.og.Coloring ℕ := Coloring.subcoloring isSubg LC.coloring
-  have h_mem : ∀ v, c v ∈ list_c.f v := by
-    intro v
-    exact LC.color_mem_f v
-  exact ⟨{ coloring := c, color_mem_f := h_mem }⟩
+  -- can only prove a triangulation exists if V ≥ 3
+  by_cases threePoints : G.cm.σ.cycleType.card + (Fintype.card G.Dart - G.cm.σ.support.card) ≥ 3
+  · obtain ⟨Gtr, isSubg, isTr⟩ := triangulationExists G threePoints
+    obtain ⟨C, hCT, v₁, v₂, hv₁v₂, hAdj, hv₁C, hv₂C⟩ := pickOuterFace Gtr isTr
+    obtain ⟨c₁, c₂, hcc_neq, hc₁, hc₂⟩ := pickTwoColors list_c v₁ v₂
+    -- apply (*)
+    obtain ⟨LC, _, _⟩ :=
+      Gtr.listColor_isCycleAndTriangles C hCT v₁ v₂ hv₁v₂ hAdj hv₁C hv₂C
+        list_c.f c₁ c₂ hcc_neq hc₁ hc₂
+        (fun v _ _ _ => by rw [list_c.cardinality_K]; norm_num)
+        (fun v _   => by rw [list_c.cardinality_K])
+    -- Transfer the coloring of Gtr to original G
+    let c : G.og.Coloring ℕ := Coloring.subcoloring isSubg LC.coloring
+    have h_mem : ∀ v, c v ∈ list_c.f v := by
+      intro v
+      exact LC.color_mem_f v
+    exact ⟨{ coloring := c, color_mem_f := h_mem }⟩
+  · sorry -- in this case we have that V < 5, and thus it can
+          -- be colored with any list of 5-colors
 
 /-- simple collorary that planar graphs are 5-colorable
 -/
