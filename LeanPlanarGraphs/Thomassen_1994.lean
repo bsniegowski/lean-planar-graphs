@@ -48,7 +48,7 @@ lemma pickOuterFace (G : PlanarGraph V) (isTr : G.IsPlaneTriangulation) :
       ∃ v₁ v₂ : V, v₁ ≠ v₂ ∧ G.og.Adj v₁ v₂ ∧ v₁ ∈ C ∧ v₂ ∈ C := by
   -- Darts are non-empty from isTr.1
   have hNE : Nonempty G.og.Dart := by
-    sorry
+    exact G.TriangleHasDarts isTr
   obtain ⟨d₀⟩ := hNE
   -- The face through d₀ has 3 darts
   have hFace : (G.cm.Φ.cycleOf d₀).support.card = 3 := isTr.2 d₀
