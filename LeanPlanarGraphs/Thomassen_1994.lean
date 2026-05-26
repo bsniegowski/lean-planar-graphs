@@ -27,6 +27,48 @@ def PlanarGraph.isCycleAndTriangles (G : PlanarGraph V) (C : List V) : Prop :=
           ∧ ∀ d : G.og.Dart, d ∉ (G.cm.Φ.cycleOf d₀).support →
           (G.cm.Φ.cycleOf d).support.card = 3
 
+/-- Just checks all possible combinations for being consecutive -/
+def areConsecutive (C : List V) (u v : V) : Prop :=
+  (∃ i, C[i]? = some u ∧ C[i + 1]? = some v) ∨
+  (∃ i, C[i]? = some v ∧ C[i + 1]? = some u) ∨
+  (C.head? = some u ∧ C.getLast? = some v) ∨
+  (C.head? = some v ∧ C.getLast? = some u)
+
+def hasChord (G : PlanarGraph V) (C : List V) : Prop :=
+  ∃ u v : V, u ∈ C ∧ v ∈ C ∧ G.og.Adj u v ∧ ¬ areConsecutive C u v
+
+/-- This pulls out the `n : ℕ` from `PlanarGraph.isCycleAndTriangles` to perform induction -/
+theorem listColor_isCycleAndTriangles' (n : ℕ) :
+    ∀ {V : Type} [Fintype V] [DecidableEq V]
+      (G : PlanarGraph V) (C : List V),
+      Fintype.card V = n →
+      G.isCycleAndTriangles C →
+      ∀ (v₁ v₂ : V),
+        v₁ ≠ v₂ →
+        G.og.Adj v₁ v₂ →
+        v₁ ∈ C → v₂ ∈ C →
+      ∀ (f : V → Finset ℕ) (c₁ c₂ : ℕ),
+        c₁ ≠ c₂ →
+        c₁ ∈ f v₁ → c₂ ∈ f v₂ →
+        (∀ v, v ∈ C → v ≠ v₁ → v ≠ v₂ → 3 ≤ (f v).card) →
+        (∀ v, v ∉ C → 5 ≤ (f v).card) →
+      ∃ (LC : G.og.ListColoring ℕ f), LC.coloring v₁ = c₁ ∧ LC.coloring v₂ = c₂ := by
+  induction n using Nat.strong_induction_on with
+  | _ n ih =>
+    intro V _ _ G C hcard hCT v₁ v₂ hv₁v₂ hAdj hv₁C hv₂C f c₁ c₂ hcc hc₁ hc₂ h3 h5
+    match n, hcard with
+    | 0, _ => sorry -- contradiction with hCT
+    | 1, _ => sorry -- contradiction with hCT
+    | 2, _ => sorry -- contradiction with hCT
+    | 3, hcard => sorry -- the base case
+    | k + 4, hcard => -- inductive step (n ≥ 4)
+      by_cases hChord : hasChord G C
+      · -- chord case
+        obtain ⟨u, v, huC, hvC, hAdj, hNotConsec⟩ := hChord
+        sorry
+      · -- no chord case
+        sorry
+
 /-- statement of (*) -/
 theorem PlanarGraph.listColor_isCycleAndTriangles (G : PlanarGraph V) (C : List V)
   (hCT : G.isCycleAndTriangles C)
@@ -39,8 +81,11 @@ theorem PlanarGraph.listColor_isCycleAndTriangles (G : PlanarGraph V) (C : List 
   (hv₁valcol : c₁ ∈ f v₁) (hv₂valcol : c₂ ∈ f v₂)
   (hCgte3col : ∀ v, v ∈ C → v ≠ v₁ → v ≠ v₂ → 3 ≤ (f v).card)
   (hGminCgte5col : ∀ v, v ∉ C → 5 ≤ (f v).card) :
-  ∃ (LC : G.og.ListColoring ℕ f), LC.coloring v₁ = c₁ ∧ LC.coloring v₂ = c₂ := by
-    sorry
+  ∃ (LC : G.og.ListColoring ℕ f), LC.coloring v₁ = c₁ ∧ LC.coloring v₂ = c₂ :=
+    listColor_isCycleAndTriangles' (Fintype.card V) G C rfl hCT
+    v₁ v₂ hv₁v₂ h_adj_v₁v₂ hv₁inC hv₂inC f c₁ c₂ hcc hv₁valcol hv₂valcol
+    hCgte3col hGminCgte5col
+
 
 /-- Pick any face to be outer and two adjacent vertices on it -/
 lemma pickOuterFace (G : PlanarGraph V) (isTr : G.IsPlaneTriangulation) :
@@ -66,7 +111,7 @@ lemma pickOuterFace (G : PlanarGraph V) (isTr : G.IsPlaneTriangulation) :
       apply List.Nodup.cons
       · apply List.not_mem_cons_of_ne_of_not_mem
         · simp [v₀, v₁, d₁]
-          rw[cm_Φ_fst_eq_snd G.repG d₀] 
+          rw[cm_Φ_fst_eq_snd G.repG d₀]
           simp
         · simp [v₀, v₂]
           have : G.cm.Φ d₂ = d₀ := by
@@ -74,13 +119,13 @@ lemma pickOuterFace (G : PlanarGraph V) (isTr : G.IsPlaneTriangulation) :
             sorry -- prove that φ φ φ d₀ = d₀, which follows
                   -- from the cycle of d₀ under φ having support 3
           rw[←this]
-          rw[cm_Φ_fst_eq_snd G.repG d₂] 
+          rw[cm_Φ_fst_eq_snd G.repG d₂]
           simp
-        
+
       · apply List.Nodup.cons
         · apply List.not_mem_cons_of_ne_of_not_mem
           · simp [v₁, v₂]
-            rw[cm_Φ_fst_eq_snd G.repG d₁] 
+            rw[cm_Φ_fst_eq_snd G.repG d₁]
             simp
           · simp
         simp
@@ -93,15 +138,15 @@ lemma pickOuterFace (G : PlanarGraph V) (isTr : G.IsPlaneTriangulation) :
       · rintro ⟨a, aoncycle, a_fst_x⟩
         obtain aoncycle : a ∈ (G.cm.Φ.cycleOf d₀).support := by simp; assumption
         rw[←a_fst_x]
-        sorry -- consider cases that a is d₀ d₁ or d₂ 
+        sorry -- consider cases that a is d₀ d₁ or d₂
               -- then obvious in each case
       · intro xinc
-        by_cases eqv₀ : x = v₀ 
+        by_cases eqv₀ : x = v₀
         use d₀
         constructor
         · simp
           apply Equiv.Perm.support_cycleOf_nonempty.mp
-          apply Finset.card_pos.mp 
+          apply Finset.card_pos.mp
           exact Nat.lt_of_sub_eq_succ hFace
         rw[eqv₀]
         by_cases eqv₁ : x = v₁
@@ -112,7 +157,7 @@ lemma pickOuterFace (G : PlanarGraph V) (isTr : G.IsPlaneTriangulation) :
           rw[←this]
           simp
           apply Equiv.Perm.support_cycleOf_nonempty.mp
-          apply Finset.card_pos.mp 
+          apply Finset.card_pos.mp
           rw[this]
           exact Nat.lt_of_sub_eq_succ hFace
         rw[eqv₁]
@@ -127,7 +172,7 @@ lemma pickOuterFace (G : PlanarGraph V) (isTr : G.IsPlaneTriangulation) :
           rw[←this]
           simp
           apply Equiv.Perm.support_cycleOf_nonempty.mp
-          apply Finset.card_pos.mp 
+          apply Finset.card_pos.mp
           rw[this]
           exact Nat.lt_of_sub_eq_succ hFace
         rw[eqv₂]
@@ -142,7 +187,7 @@ lemma pickOuterFace (G : PlanarGraph V) (isTr : G.IsPlaneTriangulation) :
       exact isTr.2 d
   -- v₀ ≠ v₁
   · simp [v₀, v₁, d₁]
-    rw[cm_Φ_fst_eq_snd G.repG d₀] 
+    rw[cm_Φ_fst_eq_snd G.repG d₀]
     simp
   -- adjacency of v₀ and v₁
   · have h : v₁ = d₀.snd := cm_Φ_fst_eq_snd G.repG d₀
@@ -158,7 +203,7 @@ lemma pickTwoColors (list : SimpleGraph.KList ℕ 5) (v₁ v₂ : V) :
     ∃ c₁ c₂ : ℕ, c₁ ≠ c₂ ∧ c₁ ∈ list.f v₁ ∧ c₂ ∈ list.f v₂ := by
   --choose an element in list.f v₁
   have : (list.f v₁).Nonempty := by
-    apply Finset.card_ne_zero.mp 
+    apply Finset.card_ne_zero.mp
     have : (list.f v₁).card = 5 := by
       exact list.cardinality_K v₁
     linarith
@@ -166,7 +211,7 @@ lemma pickTwoColors (list : SimpleGraph.KList ℕ 5) (v₁ v₂ : V) :
 
   --choose an element in list.f v₂ \ {a₁}
   have : (list.f v₂ \ {a₁}).Nonempty := by
-    apply Finset.sdiff_nonempty_of_card_lt_card 
+    apply Finset.sdiff_nonempty_of_card_lt_card
     have : (list.f v₂).card = 5 := by
       exact list.cardinality_K v₂
     rw[this]
@@ -176,11 +221,11 @@ lemma pickTwoColors (list : SimpleGraph.KList ℕ 5) (v₁ v₂ : V) :
   let a₂ : ℕ := this.choose
   have : a₂ ∈ list.f v₂ \ {a₁} := by
       apply Classical.choose_spec _
-  
+
   use a₁
   use a₂
 
-  refine ⟨?_,?_,?_⟩ 
+  refine ⟨?_,?_,?_⟩
   · have : a₁ ∉ list.f v₂ \ {a₁} := by
       apply Finset.notMem_sdiff_of_mem_right
       exact Finset.mem_singleton.mpr rfl
