@@ -45,7 +45,8 @@ def CombinatorialMapRepresentsMaximallyPlanar {V : Type} [Fintype V] [DecidableE
  -/
 
 -- state Proposition 4.2.8
-theorem PlanarGraph.IsMaximal_iff_IsPlaneTriangulation (G : PlanarGraph V) :
+theorem PlanarGraph.IsMaximal_iff_IsPlaneTriangulation (G : PlanarGraph V)
+(h : G.cm.σ.cycleType.card + (Fintype.card G.og.Dart - G.cm.σ.support.card) ≥ 3) :
 G.IsMaximal ↔ G.IsPlaneTriangulation := by
   constructor
   · intro h
@@ -61,6 +62,46 @@ CombinatorialMapRepresentsGraph G cm ∧ IsPlaneTriangulationMap cm := by
   sorry
  -/
 
-theorem triangulationExists (G : PlanarGraph V)
-: ∃ G' : PlanarGraph V, G.og ≤ G'.og ∧ G'.IsPlaneTriangulation := by
-  sorry
+-- construct maximal planar supergraph of type PlanarGraph V
+lemma PlanarGraph.existsMaximalPlanarSupergraph (G : PlanarGraph V) :
+  ∃ G' : PlanarGraph V, G.og ≤ G'.og ∧ G'.IsMaximal := by
+  classical -- makes IsPlanar H work
+  let S : Set (SimpleGraph V) := { H | G.og ≤ H ∧ IsPlanar H }
+  have hS_nonempty : ∃ H, H ∈ S := by
+    sorry
+  have hS_finite : S.Finite := by
+    sorry
+  -- Set.Finite.exists_maximalFor gives maximum of
+  -- finite set of SimpleGraphs S w.r.t. cardinality of edge set
+  obtain ⟨H, hHinS, hmax⟩ := Set.Finite.exists_maximalFor
+    (fun H : SimpleGraph V => H.edgeFinset.card)
+    S
+    hS_finite
+    hS_nonempty
+  obtain ⟨cm, hrepG, hplanar⟩ := hHinS.2 -- hHinS : G.og ≤ H ∧ IsPlanar H
+  let G' : PlanarGraph V :=
+  { og := H,
+    cm := cm,
+    decRel := inferInstance,
+    isConnected := sorry,
+    repG := hrepG,
+    isPlanar := hplanar }
+  have hsubG : G.og ≤ G'.og := hHinS.1
+  have hmax' : G'.IsMaximal := by
+    sorry
+  exact ⟨G', hsubG, hmax'⟩
+
+-- assuming maximal planar supergraph exists, triangulation exists
+theorem PlanarGraph.triangulationExists (G : PlanarGraph V)
+(h : G.cm.σ.cycleType.card + (Fintype.card G.og.Dart - G.cm.σ.support.card) ≥ 3) :
+∃ G' : PlanarGraph V, G.og ≤ G'.og ∧ G'.IsPlaneTriangulation := by
+  obtain ⟨G', hsub, hmax⟩ := PlanarGraph.existsMaximalPlanarSupergraph G
+  have h' : G'.cm.σ.cycleType.card + (Fintype.card G'.Dart - G'.cm.σ.support.card) ≥ 3 := by
+    sorry
+  have htriang : G'.IsPlaneTriangulation :=
+  (PlanarGraph.IsMaximal_iff_IsPlaneTriangulation G' h').mp hmax
+  exact ⟨G', hsub, htriang⟩
+
+/- to prove h', need consider changing way this line used to calculate cardinality
+of vertex set works; might be better to work directly with Finset of vertices from G'.og
+-/
