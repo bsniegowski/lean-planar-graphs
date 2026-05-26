@@ -141,3 +141,9 @@ theorem PlanarGraph.fiveListColorable (G : PlanarGraph V) : G.ListColorable 5 :=
     intro v
     exact LC.color_mem_f v
   exact ⟨{ coloring := c, color_mem_f := h_mem }⟩
+
+/-- simple collorary that planar graphs are 5-colorable
+-/
+theorem PlanarGraph.fiveColorable (G : PlanarGraph V) : G.Colorable 5 := by
+  obtain Glistcolorable := G.fiveListColorable
+  exact SimpleGraph.ListColoring.ListColorable_imp_colorable G.og 5 Glistcolorable
